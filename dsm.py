@@ -2,14 +2,15 @@ import os
 os.environ['PROJ_LIB'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/proj'
 os.environ['GDAL_DATA'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/gdal'
 
-fp = r"C:/Users/HP/Documents/Internship/Data/dsm_voorschoten_RD_clip.tif"
+# This is the path to the DSM.
+dsm = r"C:/Users/HP/Documents/Internship/Data/dsm_voorschoten_RD_clip.tif"
 
 # Create a rasterio crs object for RD new
-#crs_rdnew = CRS.from_string('EPSG:28992')
+#crs_rdnew = CRS.from_string('EPSG:28992') --- that's the correct projection
 #dsm_proj = dsm.rio.reproject(crs_rdnew)
 
-# Remove the small clumps of pixels from the map of vegetation.
-fp2 = r'C:/Users/HP/Documents/Internship/Data/Outputs/vegetation.tif'
+# Remove the small clumps of pixels from the map of vegetation. The threshold is set to 1000 pixels just for the testing phase.
+fp2 = r'C:/Users/HP/Documents/Internship/Data/Outputs/vegetation.tif' # path to the vegetation map derived using a threshold on NDVI values
 import gdal
 Image = gdal.Open(fp2, 1)  # open image in read-write mode
 Band = Image.GetRasterBand(1)
@@ -55,6 +56,7 @@ with rasterio.open("C:/Users/HP/Documents/Internship/Data/dsm_voorschoten_RD_cli
     out_image, out_transform = rasterio.mask.mask(src, shapes, invert=True)
     out_meta = src.meta
 
+# Update the metadata of the image.
 out_meta.update({"driver": "GTiff",
                  "height": out_image.shape[1],
                  "width": out_image.shape[2],
