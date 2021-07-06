@@ -23,7 +23,8 @@ import shapely.geometry as geom
 fp = r'C:/Users/HP/Documents/Internship/Data/Outputs/vegetation.tif'  # Path to the vegetation map
 vegetation = gdal.Open(fp, 1)  # open image in read-write mode
 band = vegetation.GetRasterBand(1)
-gdal.SieveFilter(srcBand=band, maskBand=None, dstBand=band, threshold=1000, connectedness=8, callback=gdal.TermProgress_nocb)
+gdal.SieveFilter(srcBand=band, maskBand=None, dstBand=band, threshold=1000,
+                 connectedness=8, callback=gdal.TermProgress_nocb)
 del vegetation, band  # Close the datasets
 
 # Read the map of vegetation as an array and transform it into a list of polygons.
