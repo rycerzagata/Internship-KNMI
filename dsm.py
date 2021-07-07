@@ -1,6 +1,7 @@
 import os
 os.environ['PROJ_LIB'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/proj'
 os.environ['GDAL_DATA'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/gdal'
+os.chdir("C:/Users/HP/Documents/Internship/Data")
 
 import gdal
 import rasterio
@@ -11,7 +12,7 @@ from fiona.crs import from_epsg
 import shapely.geometry as geom
 
 # This is the path to the DSM.
-# dsm = r"C:/Users/HP/Documents/Internship/Data/dsm_voorschoten_RD_clip.tif"
+dsm = r"C:/Users/HP/Documents/Internship/Data/dsm_voorschoten_RD_clip.tif"
 
 # Create a rasterio crs object for RD new.
 #crs_rdnew = CRS.from_string('EPSG:28992') # That's the correct projection
@@ -20,7 +21,7 @@ import shapely.geometry as geom
 
 # Remove the small clumps of pixels from the map of vegetation.
 # The threshold is set to 1000 pixels to make the code execution shorter for now.
-fp = r'C:/Users/HP/Documents/Internship/Data/Outputs/vegetation.tif'  # Path to the vegetation map
+fp = r'./Outputs/vegetation.tif'  # Path to the vegetation map
 vegetation = gdal.Open(fp, 1)  # open image in read-write mode
 band = vegetation.GetRasterBand(1)
 gdal.SieveFilter(srcBand=band, maskBand=None, dstBand=band, threshold=1000,
@@ -33,32 +34,41 @@ with rasterio.open(fp, driver="GTiff") as src:
 
 img = rasterio.open(fp, driver="GTiff") # will be used to copy the transform argument below
 
+my_vec = []
 my_poly = []
 for vec in shapes(my_array, transform=img.transform):
+    my_vec.append(vec[1])
     my_poly.append(geom.shape(vec[0]))
+
 
 # Define a polygon feature geometry with one attribute (ideally two attributes: id and value).
 opts = {
     'driver': 'ESRI Shapefile',
     'schema': {
         'geometry': '3D Polygon',
-        'properties': {'id':'int'}
+        'properties': {'id':'int','value':'int'}
     }
 }
 
 # Create a shapefile with the polygons from the list.
-fn = r'C:/Users/HP/Documents/Internship/Data/Outputs/test_poly.shp'
+fn = r'./Outputs/test_poly.shp'
 with fiona.open(fn, mode='w', **opts, crs=from_epsg(28992)) as output:
     for i, poly in enumerate(my_poly):
         output.write({'geometry': geom.mapping(poly),
-                      'properties': {'id': i}})
+                      'properties': {'id': i, 'value': my_vec[i]}})
 
 # Apply the features in the shapefile as a mask on the raster.
-with fiona.open("C:/Users/HP/Documents/Internship/Data/Outputs/test_poly.shp", "r") as shapefile:
-    polygons = [feature["geometry"] for feature in shapefile]
+with fiona.open("./Outputs/test_poly.shp", "r") as shapefile:
+    polygons = [feature['geometry'] for feature in shapefile]
+# ??????? czy to potrzebne^
 
-with rasterio.open("C:/Users/HP/Documents/Internship/Data/dsm_voorschoten_RD_clip.tif", driver="GTiff") as src:
-    out_image, out_transform = mask(src, polygons, invert=True)
+import geopandas as gp
+polygons_gdf = gp.read_file("./Outputs/test_poly.shp")
+veg_poly = polygons_gdf[polygons_gdf['value'] > 0]
+
+
+with rasterio.open(dsm, driver="GTiff") as src:
+    out_image, out_transform = mask(src, veg_poly.geometry, invert=False)
     out_meta = src.meta
 
 # Update the metadata of the image.
@@ -68,5 +78,21 @@ out_meta.update({"driver": "GTiff",
                  "transform": out_transform})
 
 # Save the results to a new raster.
-with rasterio.open("C:/Users/HP/Documents/Internship/Data/Outputs/dsm_masked.tif", "w", **out_meta) as dest:
+with rasterio.open("./Outputs/dsm_masked.tif", "w", **out_meta) as dest:
     dest.write(out_image)
+
+# ADDITIONAL
+# Another way to clip the DSM.
+import rioxarray as rxr
+dsm_raster = rxr.open_rasterio(dsm, masked=False).squeeze()
+dsm_clipped = dsm_raster.rio.clip(veg_poly.geometry.apply(geom.mapping))
+
+
+# You can compute the maximum value of vegetation height using rasterstats package.
+from rasterstats import zonal_stats
+stats = zonal_stats("./Outputs/test_poly.shp", "dsm_voorschoten_RD_clip.tif",
+            stats="count mean max")
+
+from rasterio.plot import show
+show(dsm_raster)
+
