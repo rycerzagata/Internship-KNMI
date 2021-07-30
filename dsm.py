@@ -58,8 +58,8 @@ with fiona.open(fn, mode='w', **opts, crs=from_epsg(28992)) as output:
                       'properties': {'id': i, 'value': my_vec[i]}})
 
 # Apply the features in the shapefile as a mask on the raster.
-with fiona.open("./Outputs/test_poly.shp", "r") as shapefile:
-    polygons = [feature['geometry'] for feature in shapefile]
+#with fiona.open("./Outputs/test_poly.shp", "r") as shapefile:
+   # polygons = [feature['geometry'] for feature in shapefile]
 # ??????? czy to potrzebne^
 
 import geopandas as gp
@@ -81,10 +81,20 @@ out_meta.update({"driver": "GTiff",
 with rasterio.open("./Outputs/dsm_masked.tif", "w", **out_meta) as dest:
     dest.write(out_image)
 
+
+import rioxarray as rxr
+dem = rxr.open_rasterio("ahn_dem_voorschoten_clip.tif")
+veg_dsm = rxr.open_rasterio("./Outputs/dsm_masked_clip.tif")
+veg_dsm.rio.bounds()
+dem.rio.bounds()
+chm = veg_dsm - dem
+from rasterio.plot import show
+show(chm)
+
 # ADDITIONAL
 # Another way to clip the DSM.
 import rioxarray as rxr
-dsm_raster = rxr.open_rasterio(dsm, masked=False).squeeze()
+dsm_raster = rxr.open_rasterio(dsm)
 dsm_clipped = dsm_raster.rio.clip(veg_poly.geometry.apply(geom.mapping))
 
 
@@ -92,7 +102,4 @@ dsm_clipped = dsm_raster.rio.clip(veg_poly.geometry.apply(geom.mapping))
 from rasterstats import zonal_stats
 stats = zonal_stats("./Outputs/test_poly.shp", "dsm_voorschoten_RD_clip.tif",
             stats="count mean max")
-
-from rasterio.plot import show
-show(dsm_raster)
 
