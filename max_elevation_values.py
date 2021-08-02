@@ -17,7 +17,6 @@ test_origin = (643, 652)
 rotation_step = 1
 
 
-
 def rotate(origin: (float, float), point: (float, float), angle: int):
     import math
     """
@@ -91,20 +90,14 @@ def scan_environment(height_map: np.array, origin: (float, float), num_of_sample
 
     samples = np.zeros((360, num_of_samples), dtype='float')
     for rotation in range(360):
-        # x, y = origin
         sample_index = 0
-        map_height, map_width = height_map.shape
         # Update deltas according to current rotation
         all_points = get_points_from_rotation(origin, rotation, num_of_samples)
         rotated_points = all_points[:, 1]
         for point in rotated_points:
-           # x, y = point
-           # while 0 < x <= map_width and 0 < y <= map_height:
             samples[rotation, sample_index] = interpolate(height_map, point)
             sample_index += 1
     return samples
-
-
 
 
 test_samples = scan_environment(myarray, test_origin, 10)
