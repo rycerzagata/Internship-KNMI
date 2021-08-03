@@ -1,20 +1,6 @@
-import os
-
-os.environ['PROJ_LIB'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/proj'
-os.environ['GDAL_DATA'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/gdal'
-os.chdir("C:/Users/HP/Documents/Internship/Data")
-
 import numpy as np
+import math
 import gdal
-
-# Import a cropped DSM as a numpy array
-fp = r"dsm_voorschoten_RD_clip.tif"
-ds = gdal.Open(fp)
-myarray = np.array(ds.GetRasterBand(1).ReadAsArray())
-height, width = myarray.shape
-
-test_origin = (643, 652)
-rotation_step = 1
 
 
 def rotate(origin: (float, float), point: (float, float), angle: int):
@@ -31,10 +17,6 @@ def rotate(origin: (float, float), point: (float, float), angle: int):
     qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
     qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
     return qx, qy
-
-
-import numpy as np
-import math
 
 
 def interpolate(height_map: np.array, point: (float, float)) -> float:
@@ -62,9 +44,8 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     return z00 * (1 - x) * (1 - y) + z10 * x * (1 - y) + z01 * (1 - x) * y + z11 * x * y
 
 
-def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples: float) -> np.array:
+def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples: int, height: int) -> np.array:
     # na podstawie kata obrotu w stopniach i ilości sampli zrob liste z pozycjami punktów
-    height, width = myarray.shape
     step = height // 2 // num_of_samples
     ox, oy = origin
     list_of_points = np.zeros((num_of_samples, 2), dtype=tuple)
@@ -77,7 +58,7 @@ def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples:
     return list_of_points
 
 
-def scan_environment(height_map: np.array, origin: (float, float), num_of_samples: float) -> np.array:
+def scan_environment(height_map: np.array, origin: (float, float), num_of_samples: int) -> np.array:
     """
 
     :param num_of_samples: Number of samples taken on a line from origin to the edge of height_map
@@ -92,7 +73,7 @@ def scan_environment(height_map: np.array, origin: (float, float), num_of_sample
     for rotation in range(360):
         sample_index = 0
         # Update deltas according to current rotation
-        all_points = get_points_from_rotation(origin, rotation, num_of_samples)
+        all_points = get_points_from_rotation(origin=origin, angle=rotation, num_of_samples=num_of_samples, height=height_map.shape[1])
         rotated_points = all_points[:, 1]
         for point in rotated_points:
             samples[rotation, sample_index] = interpolate(height_map, point)
@@ -100,4 +81,16 @@ def scan_environment(height_map: np.array, origin: (float, float), num_of_sample
     return samples
 
 
-test_samples = scan_environment(myarray, test_origin, 10)
+def load_data() -> np.array:
+    # os.environ['PROJ_LIB'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/proj'
+    # os.environ['GDAL_DATA'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/gdal'
+
+    # Import a cropped DSM as a numpy array
+    path = r"dsm_voorschoten_RD_clip.tif"
+    ds = gdal.Open(path)
+    return np.array(ds.GetRasterBand(1).ReadAsArray())
+
+
+if __name__ == '__main__':
+    height_map = load_data()
+    test_samples = scan_environment(height_map=height_map, origin=(643, 652), num_of_samples=10)
