@@ -47,13 +47,20 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     z01 = height_map[x1, y2]
     z11 = height_map[x2, y2]
 
-    if (x2 - x1) == 0 or (y2 - y1) == 0:
-        interpolated_value = z00
-    else:
-        interpolated_value = (z00 * (x2 - x) * (y2 - y) +
-                              z10 * (x - x1) * (y2 - y) +
-                              z01 * (x2 - x) * (y - y1) +
-                              z11 * (x - x1) * (y - y1)) / ((x2 - x1) * (y2 - y1) + 0.0)
+    x = x - math.floor(x)
+    y = y - math.floor(y)
+
+    w11 = (1 - x) * (1 - y)
+    w12 = (1 - x) * y
+    w21 = x * (1 - y)
+    w22 = x * y
+
+    interpolated_value = z00 * w11 + z10 * w21 + z01 * w12 + z11 * w22
+
+    # interpolated_value = (z00 * (x2 - x) * (y2 - y) +
+    # z10 * (x - x1) * (y2 - y) +
+    # z01 * (x2 - x) * (y - y1) +
+    # z11 * (x - x1) * (y - y1)) / ((x2 - x1) * (y2 - y1))
 
     return interpolated_value
 
