@@ -43,19 +43,21 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     y2 = math.ceil(y)
 
     z00 = height_map[x1, y1]
-    z10 = height_map[x2, y1]
-    z01 = height_map[x1, y2]
+    z10 = height_map[x2, y1]    # to sam co f(Q21)
+    z01 = height_map[x1, y2]    # to samo co f(Q12)
     z11 = height_map[x2, y2]
 
-    x = x - math.floor(x)
-    y = y - math.floor(y)
+    a = x - math.floor(x)
+    b = y - math.floor(y)
 
-    w11 = (1 - x) * (1 - y)
-    w12 = (1 - x) * y
-    w21 = x * (1 - y)
-    w22 = x * y
+    w11 = (x2 - x)*(y2 - y)/(x2 - x1)*(y2 - y1)     # (1 - a) * (1 - b)
+    w12 = (x2 - x)*(y - y1)/(x2 - x1)*(y2 - y1)     # (1 - a) * b
+    w21 = (x - x1)*(y2 - y)/(x2 - x1)*(y2 - y1)     # a * (1 - b)
+    w22 = (x - x1)*(y - y1)/(x2 - x1)*(y2 - y1)     # a * b
 
-    interpolated_value = z00 * w11 + z10 * w21 + z01 * w12 + z11 * w22
+    interpolated_value = w11*z00 + w12*z01 + w21*z10 + w22*z11
+
+    # interpolated_value = z00 * w11 + z10 * w21 + z01 * w12 + z11 * w22
 
     # interpolated_value = (z00 * (x2 - x) * (y2 - y) +
     # z10 * (x - x1) * (y2 - y) +
