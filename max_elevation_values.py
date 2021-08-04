@@ -30,11 +30,12 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     # TODO Test if it works, implement edge case checks and finish documentation
 
     # Take care of edge cases, i.e. when a point is outside or on the edge of height_map
-    # ....
-    # if condition returns False, AssertionError is raised:
-    # assert x == "goodbye", "x should be 'hello'"
+
+    # if condition returns False, AssertionError is raised
 
     x, y = point
+    assert height_map.shape[0] > x > 0, "x out of bounds"
+    assert height_map.shape[1] > y > 0, "y out of bounds"
 
     # Interpolate values
     x1 = math.floor(x)
@@ -43,19 +44,26 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     y2 = math.ceil(y)
 
     z00 = height_map[x1, y1]
-    z10 = height_map[x2, y1]    # to sam co f(Q21)
-    z01 = height_map[x1, y2]    # to samo co f(Q12)
+    z10 = height_map[x2, y1]
+    z01 = height_map[x1, y2]
     z11 = height_map[x2, y2]
 
-    a = x - math.floor(x)
-    b = y - math.floor(y)
+    def linear(x0: float, z0: float, x1: float, z1: float, x: float):
+        """Perform linear interpolation for x, y between (x0,y0) and (x1,y1) """
+        return z0 + (z1 - z0)/(x1 - x0) * (x - x0)
 
-    w11 = (x2 - x)*(y2 - y)/(x2 - x1)*(y2 - y1)     # (1 - a) * (1 - b)
-    w12 = (x2 - x)*(y - y1)/(x2 - x1)*(y2 - y1)     # (1 - a) * b
-    w21 = (x - x1)*(y2 - y)/(x2 - x1)*(y2 - y1)     # a * (1 - b)
-    w22 = (x - x1)*(y - y1)/(x2 - x1)*(y2 - y1)     # a * b
-
-    interpolated_value = w11*z00 + w12*z01 + w21*z10 + w22*z11
+    if x2 == x1 & y2 == y1:
+        interpolated_value = z00
+    elif x2 == x1 & y1 < y2:
+        interpolated_value = linear(y1, z00, y2, z11, y)
+    elif y2 == y1 & x1 < x2:
+        interpolated_value = linear(x1, z00, x2, z11, x)
+    else:
+        w11 = (x2 - x)*(y2 - y)/(x2 - x1)*(y2 - y1)     # (1 - a) * (1 - b)
+        w12 = (x2 - x)*(y - y1)/(x2 - x1)*(y2 - y1)     # (1 - a) * b
+        w21 = (x - x1)*(y2 - y)/(x2 - x1)*(y2 - y1)     # a * (1 - b)
+        w22 = (x - x1)*(y - y1)/(x2 - x1)*(y2 - y1)     # a * b
+        interpolated_value = w11*z00 + w12*z01 + w21*z10 + w22*z11
 
     # interpolated_value = z00 * w11 + z10 * w21 + z01 * w12 + z11 * w22
 
