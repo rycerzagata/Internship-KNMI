@@ -33,15 +33,29 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     # ....
     # if condition returns False, AssertionError is raised:
     # assert x == "goodbye", "x should be 'hello'"
+
     x, y = point
 
     # Interpolate values
-    z00 = height_map[math.floor(x), math.floor(y)]
-    z10 = height_map[math.ceil(x), math.floor(y)]
-    z01 = height_map[math.floor(x), math.ceil(y)]
-    z11 = height_map[math.ceil(x), math.ceil(y)]
+    x1 = math.floor(x)
+    y1 = math.floor(y)
+    x2 = math.ceil(x)
+    y2 = math.ceil(y)
 
-    return z00 * (1 - x) * (1 - y) + z10 * x * (1 - y) + z01 * (1 - x) * y + z11 * x * y
+    z00 = height_map[x1, y1]
+    z10 = height_map[x2, y1]
+    z01 = height_map[x1, y2]
+    z11 = height_map[x2, y2]
+
+    if (x2 - x1) == 0 or (y2 - y1) == 0:
+        interpolated_value = z00
+    else:
+        interpolated_value = (z00 * (x2 - x) * (y2 - y) +
+                              z10 * (x - x1) * (y2 - y) +
+                              z01 * (x2 - x) * (y - y1) +
+                              z11 * (x - x1) * (y - y1)) / ((x2 - x1) * (y2 - y1) + 0.0)
+
+    return interpolated_value
 
 
 def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples: int, height: int) -> np.array:
