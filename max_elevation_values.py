@@ -65,8 +65,6 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
         w22 = (x - x1)*(y - y1)/(x2 - x1)*(y2 - y1)     # a * b
         interpolated_value = w11*z00 + w12*z01 + w21*z10 + w22*z11
 
-    # interpolated_value = z00 * w11 + z10 * w21 + z01 * w12 + z11 * w22
-
     # interpolated_value = (z00 * (x2 - x) * (y2 - y) +
     # z10 * (x - x1) * (y2 - y) +
     # z01 * (x2 - x) * (y - y1) +
