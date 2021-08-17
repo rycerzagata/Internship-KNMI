@@ -6,9 +6,11 @@ import gdal
 def rotate(origin: (float, float), point: (float, float), angle: int):
     import math
     """
-    Rotate a point counterclockwise by a given angle around a given origin.
-
-    The angle should be given in degrees.
+    
+    :param origin: A tuple with the X and Y position of the image origin.
+    :param point: A tuple with X and Y position of a point that is supposed to be rotated.
+    :param angle: The rotation angle, given in degrees.
+    :return The coordinates of a point rotated counterclockwise by a given angle around a given origin.
     """
     angle = -math.radians(angle)
     ox, oy = origin
@@ -22,7 +24,7 @@ def rotate(origin: (float, float), point: (float, float), angle: int):
 def interpolate(height_map: np.array, point: (float, float)) -> float:
     """
 
-    :param point:
+    :param point: A tuple with the X and Y position of a point.
     :param height_map: 2D Numpy array of floating point values representing height readings
     :return: Bi-linear interpolation from height_map at a given point
     """
@@ -72,6 +74,14 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
 
 def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples: int, height: int) -> np.array:
     # na podstawie kata obrotu w stopniach i ilości sampli zrob liste z pozycjami punktów
+    """
+
+    :param origin: Coordinates of the origin.
+    :param angle: Angle in degrees.
+    :param num_of_samples: Number of samples to be taken from the path.
+    :param height: The height of the image (from the bottom to the top).
+    :return: Coordinates of the points where a sample is taken.
+    """
     step = height // 2 // num_of_samples
     ox, oy = origin
     list_of_points = np.zeros((num_of_samples, 2), dtype=tuple)

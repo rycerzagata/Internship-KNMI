@@ -7,9 +7,11 @@ import gdal
 import rasterio
 from rasterio.features import shapes
 from rasterio.mask import mask
+from rasterio.plot import show
 import fiona
 from fiona.crs import from_epsg
 import shapely.geometry as geom
+import rioxarray as rxr
 
 # This is the path to the DSM.
 dsm = r"C:/Users/HP/Documents/Internship/Data/dsm_voorschoten_RD_clip.tif"
@@ -32,7 +34,7 @@ del vegetation, band  # Close the datasets
 with rasterio.open(fp, driver="GTiff") as src:
     my_array = src.read(1)
 
-img = rasterio.open(fp, driver="GTiff") # will be used to copy the transform argument below
+img = rasterio.open(fp, driver="GTiff")  # will be used to copy the transform argument below
 
 my_vec = []
 my_poly = []
@@ -41,7 +43,7 @@ for vec in shapes(my_array, transform=img.transform):
     my_poly.append(geom.shape(vec[0]))
 
 
-# Define a polygon feature geometry with one attribute (ideally two attributes: id and value).
+# Define a polygon feature geometry with ideally two attributes: id and value.
 opts = {
     'driver': 'ESRI Shapefile',
     'schema': {
@@ -81,19 +83,48 @@ out_meta.update({"driver": "GTiff",
 with rasterio.open("./Outputs/dsm_masked.tif", "w", **out_meta) as dest:
     dest.write(out_image)
 
+ahn = r"ahn_dem_voorschoten_clip.tif"
+with rasterio.open(ahn, driver="GTiff") as src:
+    out_image, out_transform = mask(src, veg_poly.geometry, invert=False)
+    out_meta = src.meta
 
-import rioxarray as rxr
-dem = rxr.open_rasterio("ahn_dem_voorschoten_clip.tif")
-veg_dsm = rxr.open_rasterio("./Outputs/dsm_masked_clip.tif")
-veg_dsm.rio.bounds()
-dem.rio.bounds()
-chm = veg_dsm - dem
-from rasterio.plot import show
-show(chm)
+# Update the metadata of the image.
+out_meta.update({"driver": "GTiff",
+                 "height": out_image.shape[1],
+                 "width": out_image.shape[2],
+                 "transform": out_transform})
+
+# Save the results to a new raster.
+with rasterio.open("./Outputs/ahn_masked.tif", "w", **out_meta) as dest:
+    dest.write(out_image)
+
+dem = rxr.open_rasterio("./Outputs/ahn_masked.tif",  masked=True).squeeze()
+dem = dem[:232, :232]
+veg_dsm = rxr.open_rasterio("./Outputs/dsm_masked.tif",  masked=True).squeeze()  # different spatial resolution
+veg_dsm = veg_dsm[:1160, :1160]
+# Downsample the veg map first (band: 1, y: 1160, x: 1160) to (band: 1, y: 232, x: 232) with window 5x5
+veg_dsm = veg_dsm.coarsen(x=5).mean().coarsen(y=5).mean()
+# veg_dsm = veg_dsm.clip(dem.rio.bounds())
+
+# Check if the images have the same extent, adjust it if needed
+print("Is the spatial extent the same?",
+      veg_dsm.rio.bounds() == dem.rio.bounds())
+# Check if the resolution is the same
+print("Is the resolution the same?",
+      veg_dsm.rio.resolution() == dem.rio.resolution())
+
+# Compute CHM (dsm - dem)
+chm = veg_dsm.astype(float) - dem.astype(float)
+# Plot the data
+import matplotlib.pyplot as plt
+f, ax = plt.subplots(figsize=(10, 5))
+chm.plot(cmap="Greens")
+ax.set(title="Canopy Height Model")
+ax.set_axis_off()
+plt.show()
 
 # ADDITIONAL
 # Another way to clip the DSM.
-import rioxarray as rxr
 dsm_raster = rxr.open_rasterio(dsm)
 dsm_clipped = dsm_raster.rio.clip(veg_poly.geometry.apply(geom.mapping))
 
