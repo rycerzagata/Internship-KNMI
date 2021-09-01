@@ -38,16 +38,12 @@ x = [0.5, 1, 1.5, 2, 2.5, 3]
 # corresponding y axis values
 y = [area05, area10, area15, area20, area25, area30]
 
-# plotting the points
+# Plotting
 plt.plot(x, y)
-
-# naming the x axis
+# Naming the x and y axis
 plt.xlabel('Temperature threshold (x * st dev)')
-# naming the y axis
-plt.ylabel('Percent of area taken by the heat sources')
-
-# giving a title to my graph
-plt.title('Relationship between area and threshold value')
-
-# function to show the plot
+plt.ylabel('Percent of area of the image taken by heat sources')
+# Giving a title to the graph
+plt.title('Relationship between area and temperature threshold')
+# Function to show the plot
 plt.show()
