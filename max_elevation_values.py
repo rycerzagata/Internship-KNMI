@@ -27,13 +27,8 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     :return: Bi-linear interpolation from height_map at a given point
     """
 
-    # TODO Test if it works, implement edge case checks and finish documentation
-
-    # Take care of edge cases, i.e. when a point is outside or on the edge of height_map
-
-    # if condition returns False, AssertionError is raised
-
-    # row, column = y, x
+    # when a point is outside or on the edge of height_map AssertionError is raised
+    # row, column = y, x in image coordinates
 
     x, y = point
     assert height_map.shape[0] > x >= 0, "x out of bounds"
@@ -51,7 +46,6 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     z11 = height_map[y2, x2]
 
     def linear(x0: float, z0: float, x1: float, z1: float, x: float):
-        """Perform linear interpolation for x, y between (x0,y0) and (x1,y1) """
         return z0 + (z1 - z0)/(x1 - x0) * (x - x0)
 
     if x2 == x1 and y2 == y1:
@@ -92,8 +86,6 @@ def scan_environment(height_map: np.array, origin: (float, float), num_of_sample
     :param origin: Point which serves as an anchor for the rotation
     :return: 360 x sampling step array where each row represent a full sampling done on each rotation
     """
-
-    # TODO Change sampling_step to num_step
 
     samples = np.zeros((360, num_of_samples), dtype='float')
     for rotation in range(360):

@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 tz = 'Europe/Amsterdam'
-lat, lon = 52.139586, 4.436399 # Voorschoten AWS
+lat, lon = 52.139586, 4.436399  # Voorschoten AWS
 
 times = pd.date_range('2019-01-01 00:00:00', '2020-01-01', closed='left',
                       freq='H', tz=tz)

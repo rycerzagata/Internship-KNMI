@@ -1,70 +1,94 @@
 import os
-os.environ['PROJ_LIB'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/proj'
-os.environ['GDAL_DATA'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/gdal'
-
-# NDVI calculations
-
-import rasterio
-from rasterio.plot import show
-import numpy
-
-fp2 = r"C:/Users/HP/Documents/Internship/Data/ortho_voorschoten_RD_clip.tif"
-
-# Load red and NIR bands
-with rasterio.open(fp2) as src:
-    band_red = src.read(3)
-
-with rasterio.open(fp2) as src:
-    band_nir = src.read(5)
-
-# Allow division by zero
-numpy.seterr(divide='ignore', invalid='ignore')
-
-# Calculate NDVI
-ndvi = (band_nir.astype(float) - band_red.astype(float)) / (band_nir + band_red)
-#ndvi[ndvi > 1] = float('NaN')
-#ndvi[ndvi < -1] = float('NaN')
-ndvi[ndvi > 1] = 1
-ndvi[ndvi < -1] = -1
-ndvi[numpy.isnan(ndvi)] = float('NaN')
-ndvi[numpy.isinf(ndvi)] = float('NaN')
-#print(numpy.amax(ndvi), numpy.amin(ndvi))
-show(ndvi)
-
-from xrspatial import convolution
-from xrspatial import focal
-import xarray
-ndvi_arr = xarray.DataArray(ndvi)
-cellsize_x, cellsize_y = convolution.calc_cellsize(ndvi_arr)
-
-# Use an annulus kernel with a ring at a distance from 25-30 cells away from focal point
-outer_radius = cellsize_x * 10
-inner_radius = cellsize_x * 1
-kernel = convolution.circle_kernel(cellsize_x, cellsize_y, outer_radius)
-ndvi_focal = focal.apply(ndvi_arr, kernel)
-#show(ndvi_focal)
-
-veg_map = ndvi_focal.copy()
-veg_map.values[veg_map.values > 0.22] = 1
-veg_map.values[veg_map.values <= 0.22] = 0
-
-import gdal
-Image = gdal.Open('SomeImageName.tif', 1)  # open image in read-write mode
-Band = Image.GetRasterBand(1)
-gdal.SieveFilter(srcBand=Band, maskBand=None, dstBand=Band, threshold=100, connectedness=8, callback=gdal.TermProgress_nocb)
-del Image, Band  # close the datasets.
-
-# Set spatial characteristics of the output object to mirror the input
-#kwargs = src.meta
-#kwargs.update(
-    #dtype=rasterio.float32,
-    #count = 1)
-
-# Create the file
-#with rasterio.open('C:/Users/HP/Documents/Internship/Data/Outputs/ndvi.tif', 'w', **kwargs) as dst:
-        #dst.write_band(1, ndvi.astype(rasterio.float32))
+os.chdir("C:/Users/HP/Documents/Internship/Data")
 
 
-fp = r"C:/Users/HP/Documents/Internship/Data/dsm_voorschoten_RD_clip.tif"
-dsm = rasterio.open(fp)
+import rpy2.robjects as robjects
+import rpy2.robjects.packages as rpackages
+
+# import R's "utils" package
+utils = rpackages.importr('utils')
+# select a mirror for R packages
+utils.chooseCRANmirror(ind=1)  # select the first mirror in the list
+
+# R package names
+packnames = ('raster', 'Rcpp')
+
+# Selectively install what needs to be install.
+utils.install_packages('rgdal')
+
+raster = rpackages.importr('raster')
+r_dem = raster.raster("ahn_dem_voorschoten_clip.tif")
+r_dsm = raster.raster("./Outputs/dsm_masked.tif")
+resample = robjects.r["resample"]
+
+r_dem_disaggr = resample(r_dem, r_dsm, "bilinear", filename="./Outputs/ahn_dem_resampled_test.tif")
+
+
+
+
+
+# Plot the data
+import matplotlib.pyplot as plt
+f, ax = plt.subplots(figsize=(10, 5))
+chm.plot(cmap="Greens")
+ax.set(title="Canopy Height Model")
+ax.set_axis_off()
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+dem = rxr.open_rasterio("./Outputs/ahn_masked.tif",  masked=True).squeeze()
+dem = dem[:232, :232]
+veg_dsm = rxr.open_rasterio("./Outputs/dsm_masked.tif",  masked=True).squeeze()  # different spatial resolution
+veg_dsm = veg_dsm[:1160, :1160]
+# Downsample the veg map first (band: 1, y: 1160, x: 1160) to (band: 1, y: 232, x: 232) with window 5x5
+veg_dsm = veg_dsm.coarsen(x=5).mean().coarsen(y=5).mean()
+# veg_dsm = veg_dsm.clip(dem.rio.bounds())
+
+# Check if the images have the same extent, adjust it if needed
+print("Is the spatial extent the same?",
+      veg_dsm.rio.bounds() == dem.rio.bounds())
+# Check if the resolution is the same
+print("Is the resolution the same?",
+      veg_dsm.rio.resolution() == dem.rio.resolution())
+
+# Compute CHM (dsm - dem)
+# regridding from one grid to another (cdo tools, rasterio, gdal, grass) maybe I can do the regridding in ArcGIS
+# multidimensional interpolation in scipy
+
+
+import rpy2.robjects as robjects
+import rpy2.robjects.packages as rpackages
+
+# import R's "utils" package
+utils = rpackages.importr('utils')
+# select a mirror for R packages
+utils.chooseCRANmirror(ind=1) # select the first mirror in the list
+
+# R package names
+packnames = ('raster')
+
+# Selectively install what needs to be install.
+names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+if len(names_to_install) > 0:
+    utils.install_packages(StrVector(names_to_install))
+
+sf = rpackages.importr('raster')
+r_dem = raster.raster("./Outputs/ahn_masked.tif")
+r_dsm = raster.raster("./Outputs/dsm_masked.tif")
+resample = robjects.r["resample"]
+
+r_dem_disaggr = resample(r_dem, r_dsm, "bilinear", filename="./Outputs/ahn_dem_resampled_test.tif")
+
+chm = veg_dsm.astype(float) - dem.astype(float)
+# if the gradient occurs in the final CHMs maybe try to correct it (first the offsets have to
+# be determined for every cell, maybe there is some non-linear curvature)
 
