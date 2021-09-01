@@ -11,6 +11,9 @@ os.environ['GDAL_DATA'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/gdal'
 import rasterio
 from rasterio.plot import show
 import numpy
+from xrspatial import convolution
+from xrspatial import focal
+import xarray
 
 os.environ['PROJ_LIB'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/proj'
 os.environ['GDAL_DATA'] = 'C:/Users/HP/anaconda3/envs/knmi/Library/share/gdal'
@@ -47,10 +50,6 @@ ndvi[numpy.isnan(ndvi)] = float('NaN')
 ndvi[numpy.isinf(ndvi)] = float('NaN')
 # print(numpy.amax(ndvi), numpy.amin(ndvi))
 show(ndvi)
-
-from xrspatial import convolution
-from xrspatial import focal
-import xarray
 
 ndvi_arr = xarray.DataArray(ndvi)
 cellsize_x, cellsize_y = convolution.calc_cellsize(ndvi_arr)
