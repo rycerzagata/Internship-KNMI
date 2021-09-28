@@ -27,6 +27,6 @@ chm_r = r_f(dir, ahn_fp, dsm_fp)
 
 # Save the CHM to a GTiff file
 raster = rpackages.importr('raster')
-raster.writeRaster(chm_r, "./Outputs/chm_test.tif", format = "GTiff", overwrite = True)
+raster.writeRaster(chm_r, "./Outputs/chm_test.tif", format="GTiff", overwrite=True)
 
 

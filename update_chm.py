@@ -1,5 +1,4 @@
 import os
-import gdal
 import rasterio
 from rasterio.features import shapes
 from rasterio.mask import mask
@@ -21,14 +20,6 @@ veg = r'./Outputs/vegetation.tif'  # Path to the vegetation map
 # Create a rasterio crs object for RD new.
 rd_new = from_epsg(28992)  # That's the correct projection
 #chm_proj = chm.rio.reproject(rd_new)
-
-# Remove the small clumps of pixels from the map of vegetation.
-# The threshold is set to 1000 pixels to make the code execution shorter for tests.
-vegetation = gdal.Open(veg, 1)  # open image in read-write mode
-band = vegetation.GetRasterBand(1)
-gdal.SieveFilter(srcBand=band, maskBand=None, dstBand=band, threshold=1000,
-                 connectedness=8, callback=gdal.TermProgress_nocb)
-del vegetation, band  # Close the datasets
 
 # Read the map of vegetation as an array and transform it into a list of polygons
 with rasterio.open(veg, driver="GTiff") as src:

@@ -15,7 +15,7 @@ with rasterio.open("./temp_heino_RD_clip_feb2020.tif") as src:
 min = numpy.amin(temp)
 avg = numpy.mean(temp)
 st_dev = numpy.std(temp)
-thr = avg + 2.5 * st_dev
+thr = avg + 4.0 * st_dev
 
 # Apply the temperature threshold on the data. Assign 1 to the heat sources and 0 to the background area.
 temp[temp >= thr] = 1
@@ -31,7 +31,7 @@ temp_meta.update(
 
 # Save the results to a new raster.
 # Resolution : 0.06597553, 0.06597553
-with rasterio.open("D:/Documents/Internship_Drones/Outputs2/heat_sources_heino_2.5sd.tif", "w", **temp_meta) as dest:
+with rasterio.open("D:/Documents/Internship_Drones/Outputs2/heat_sources_heino_4sd.tif", "w", **temp_meta) as dest:
     dest.write_band(1, temp.astype(rasterio.float32))
 
 
