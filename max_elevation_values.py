@@ -6,9 +6,11 @@ import gdal
 def rotate(origin: (float, float), point: (float, float), angle: int):
     import math
     """
-    Rotate a point counterclockwise by a given angle around a given origin.
-
-    The angle should be given in degrees.
+    
+    :param origin: A tuple with the X and Y position of the image origin.
+    :param point: A tuple with X and Y position of a point that is supposed to be rotated.
+    :param angle: The rotation angle, given in degrees.
+    :return The coordinates of a point rotated counterclockwise by a given angle around a given origin.
     """
     angle = -math.radians(angle)
     ox, oy = origin
@@ -21,14 +23,18 @@ def rotate(origin: (float, float), point: (float, float), angle: int):
 
 def interpolate(height_map: np.array, point: (float, float)) -> float:
     """
-
-    :param point:
+    :param point: A tuple with the X and Y position of a point.
     :param height_map: 2D Numpy array of floating point values representing height readings
     :return: Bi-linear interpolation from height_map at a given point
     """
 
-    # when a point is outside or on the edge of height_map AssertionError is raised
-    # row, column = y, x in image coordinates
+    # TODO Test if it works, implement edge case checks and finish documentation
+
+    # Take care of edge cases, i.e. when a point is outside or on the edge of height_map
+
+    # if condition returns False, AssertionError is raised
+
+    # row, column = y, x
 
     x, y = point
     assert height_map.shape[0] > x >= 0, "x out of bounds"
@@ -46,6 +52,7 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     z11 = height_map[y2, x2]
 
     def linear(x0: float, z0: float, x1: float, z1: float, x: float):
+        """Perform linear interpolation for x, y between (x0,y0) and (x1,y1) """
         return z0 + (z1 - z0)/(x1 - x0) * (x - x0)
 
     if x2 == x1 and y2 == y1:
@@ -66,6 +73,13 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
 
 def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples: int, height: int) -> np.array:
     # na podstawie kata obrotu w stopniach i ilości sampli zrob liste z pozycjami punktów
+    """
+    :param origin: Coordinates of the origin.
+    :param angle: Angle in degrees.
+    :param num_of_samples: Number of samples to be taken from the path.
+    :param height: The height of the image (from the bottom to the top).
+    :return: Coordinates of the points where a sample is taken.
+    """
     step = height // 2 // num_of_samples
     ox, oy = origin
     list_of_points = np.zeros((num_of_samples, 2), dtype=tuple)
@@ -80,12 +94,13 @@ def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples:
 
 def scan_environment(height_map: np.array, origin: (float, float), num_of_samples: int) -> np.array:
     """
-
     :param num_of_samples: Number of samples taken on a line from origin to the edge of height_map
     :param height_map: 2D Numpy array of floating point values representing height readings
     :param origin: Point which serves as an anchor for the rotation
     :return: 360 x sampling step array where each row represent a full sampling done on each rotation
     """
+
+    # TODO Change sampling_step to num_step
 
     samples = np.zeros((360, num_of_samples), dtype='float')
     for rotation in range(360):
