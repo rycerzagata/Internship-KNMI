@@ -27,8 +27,8 @@ with rasterio.open(fp) as src:
 numpy.seterr(divide='ignore', invalid='ignore')
 
 # Calculate NDWI
-ndwi = (band_red.astype(float) - band_nir.astype(float)) / (band_nir + band_red)
-print(numpy.amax(ndwi), numpy.amin(ndwi))
+ndwi = (band_green.astype(float) - band_nir.astype(float)) / (band_nir + band_green)
+# print(numpy.amax(ndwi), numpy.amin(ndwi))
 ndwi[numpy.isnan(ndwi)] = float('NaN')
 ndwi[numpy.isinf(ndwi)] = float('NaN')
 
@@ -36,17 +36,15 @@ ndwi_arr = xarray.DataArray(ndwi)
 cellsize_x, cellsize_y = convolution.calc_cellsize(ndwi_arr)
 
 # Use an annulus kernel with a ring at a distance of 25-30 cells away from focal point to smoothen the image
-outer_radius = cellsize_x * 10
+outer_radius = cellsize_x * 25
 inner_radius = cellsize_x * 1
 kernel = convolution.circle_kernel(cellsize_x, cellsize_y, outer_radius)
-ndvi_focal = focal.apply(ndvi_arr, kernel)
+ndwi_focal = focal.apply(ndwi_arr, kernel)
+water_map = ndwi_focal.copy()
 
-veg_map = ndvi_focal.copy()
-
-ndwi[ndwi >= 0.3] = 1
-ndwi[ndwi < 0.3] = 0
-
-show(ndwi)
+water_map.values[water_map.values >= 0] = 1
+water_map.values[water_map.values < 0] = 0
+show(water_map)
 
 # Set spatial characteristics of the output object to mirror the input
 kwargs = src.meta
@@ -55,5 +53,5 @@ kwargs.update(
     count=1)
 
 # Create the file
-with rasterio.open('C:/Users/HP/Documents/Internship/Data/Outputs/water_bodies_heino_red.tif', 'w', **kwargs) as dst:
-    dst.write_band(1, ndwi.astype(rasterio.float32))
+with rasterio.open('D:/Documents/Internship_Drones/Outputs2/water_bodies_heino.tif', 'w', **kwargs) as dst:
+    dst.write_band(1, water_map.astype(rasterio.float32))

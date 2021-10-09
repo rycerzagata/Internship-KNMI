@@ -2,9 +2,9 @@ import os
 import rpy2.robjects as robjects
 import rpy2.robjects.packages as rpackages
 
-dir = "C:/Users/HP/Documents/Internship/Data"
-ahn_fp = "ahn_dem_voorschoten_clip.tif"
-dsm_fp = "dsm_voorschoten_RD_clip.tif"
+dir = "D:/Documents/Internship_Drones/Data2"
+ahn_fp = "AHN_DTM_Heino.tif"
+dsm_fp = "DSM_Heino_feb2021.tif"
 os.chdir(dir)
 
 with open('C:/Users/HP/Documents/Internship/R/compute_chm.R', 'r') as f:
@@ -22,11 +22,11 @@ utils.chooseCRANmirror(ind=1)  # select the first mirror in the list
 
 chm_r = r_f(dir, ahn_fp, dsm_fp)
 
-# Selectively install what needs to be install.
+# Selectively install what needs to be installed.
 # utils.install_packages('raster')
 
 # Save the CHM to a GTiff file
 raster = rpackages.importr('raster')
-raster.writeRaster(chm_r, "./Outputs/chm_test.tif", format="GTiff", overwrite=True)
+raster.writeRaster(chm_r, "D:/Documents/Internship_Drones/Outputs2/chm_heino.tif", format="GTiff", overwrite=True)
 
 
