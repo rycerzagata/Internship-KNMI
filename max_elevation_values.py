@@ -123,7 +123,7 @@ def scan_environment(height_map: np.array, origin: (float, float), res: (float, 
     """
 
     samples = np.zeros((720, num_of_samples), dtype='float')
-    for rotation in np.arange(0, 360, 0.5):
+    for rotation in np.arange(0, 720):
         sample_index = 0
         # Update deltas according to current rotation
         all_points = get_points_from_rotation(origin=origin,
@@ -143,7 +143,6 @@ def scan_environment(height_map: np.array, origin: (float, float), res: (float, 
 def load_data(path: str) -> np.array:
     """
     Import a cropped DSM as a numpy array
-    :return:
     """
     ds = gdal.Open(path)
     return np.array(ds.GetRasterBand(1).ReadAsArray())
@@ -165,6 +164,7 @@ def plot_heights_and_sun(height_values: np.array, lat: float, lon: float, timezo
     solpos = solpos.loc[solpos['apparent_elevation'] > 0, :]
 
     # plot the shade using the function fill_between
+    degrees = np.zeros((1, 720), dtype='float')
     max_angles = np.max(height_values, axis=1)
     x_array = np.array(np.arange(0, 360, 0.5))
 
