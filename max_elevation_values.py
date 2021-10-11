@@ -1,9 +1,12 @@
+import time
+
 import numpy as np
 import gdal
 import math
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from numba import jit, njit, prange
 from pvlib import solarposition
 
 
@@ -24,6 +27,13 @@ def rotate(origin: (float, float), point: (float, float), angle: float):
     return qx, qy
 
 
+def linear(x0: int, z0: int, x1: int, z1: int, x: float):
+    """
+    Perform linear interpolation for x, y between (x0,y0) and (x1,y1)
+    """
+    return z0 + (z1 - z0) / (x1 - x0) * (x - x0)
+
+
 def interpolate(height_map: np.array, point: (float, float)) -> float:
     """
 
@@ -35,8 +45,8 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     # row, column = y, x
 
     x, y = point
-    assert height_map.shape[0] - 1 > x >= 0, f"x:{x} out of bounds: (0, {height_map.shape[0] - 1})"
-    assert height_map.shape[1] - 1 > y >= 0, f"y:{y} out of bounds: (0, {height_map.shape[1] - 1})"
+    assert height_map.shape[0] - 1 > x >= 0  # , f"x:{x} out of bounds: (0, {height_map.shape[0] - 1})"
+    assert height_map.shape[1] - 1 > y >= 0  # , f"y:{y} out of bounds: (0, {height_map.shape[1] - 1})"
 
     # Interpolate values
     x1 = math.floor(x)
@@ -48,10 +58,6 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     z10 = height_map[y2, x1]
     z01 = height_map[y1, x2]
     z11 = height_map[y2, x2]
-
-    def linear(x0: int, z0: int, x1: int, z1: int, x: float):
-        # Perform linear interpolation for x, y between (x0,y0) and (x1,y1)
-        return z0 + (z1 - z0) / (x1 - x0) * (x - x0)
 
     if x2 == x1 and y2 == y1:
         interpolated_value = z00
@@ -112,6 +118,7 @@ def get_points_from_rotation(origin: (float, float), angle: float, num_of_sample
     return list_of_points
 
 
+@njit(parallel=True)
 def scan_environment(height_map: np.array,
                      origin: (float, float),
                      res: (float, float),
@@ -127,7 +134,7 @@ def scan_environment(height_map: np.array,
     """
 
     samples = np.zeros((num_of_rotations, num_of_samples), dtype='float')
-    for rotation in range(num_of_rotations):
+    for rotation in prange(num_of_rotations):
         sample_index = 0
         angle = rotation / num_of_rotations * 360
         # Update deltas according to current rotation
@@ -155,7 +162,7 @@ def load_data(path: str) -> np.array:
 
 
 def plot_heights_and_sun(height_values: np.array,
-                         lat: float, 
+                         lat: float,
                          lon: float,
                          number_rotations: int,
                          timezone: str = 'Europe/Amsterdam') -> None:
@@ -205,16 +212,32 @@ def plot_heights_and_sun(height_values: np.array,
 
 
 if __name__ == '__main__':
+    print('Compiling helper functions to C...')
+    interpolate = jit()(interpolate)
+    linear = jit()(linear)
+    get_points_from_rotation = jit()(get_points_from_rotation)
+    convert_to_alpha = jit()(convert_to_alpha)
+    rotate = jit()(rotate)
+    print('Done')
+
     lat, lon = 52.434883, 6.262284  # Heino AWS
-    height_map = load_data('D:/Documents/Internship_Drones/Data2/height_map_heino_ahn.tif')
-    number_samples = 1000
-    number_rotations = 50
+    height_map = load_data('./height_map.tif')
+    number_samples = 5000
+    number_rotations = 10000
+
+    # Clean the data from -999 values
+    height_map[height_map < -900] = 0
+
+    print('Scanning environment...')
+    start_time = time.time()
 
     test_samples = scan_environment(height_map=height_map,
-                                    origin=(300, 300),
-                                    res=(0.5, 0.5),
+                                    origin=(774, 774),
+                                    res=(0.193884753946769, 0.193884753946785),
                                     num_of_samples=number_samples,
                                     num_of_rotations=number_rotations)
+    print(f'Scanning took {time.time() - start_time :.6f} seconds')
+
     plot_heights_and_sun(height_values=test_samples,
                          lat=lat,
                          lon=lon,
