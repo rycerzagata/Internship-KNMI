@@ -175,7 +175,6 @@ def plot_heights_and_sun(height_values: np.array,
     solpos = solpos.loc[solpos['apparent_elevation'] > 0, :]
 
     # plot the shade using the function fill_between
-    degrees = np.linspace(0, 360, number_rotations)
     max_angles = np.max(height_values, axis=1)
     x_array = np.linspace(0, 360, number_rotations)
 
@@ -199,7 +198,7 @@ def plot_heights_and_sun(height_values: np.array,
     ax.figure.legend(loc='upper left')
     ax.set_xlabel('Solar Azimuth (degrees)')
     ax.set_ylabel('Solar Elevation (degrees)')
-    ax.fill_between(x_array, max_angles, degrees[0])
+    ax.fill_between(x_array, max_angles, 0)
 
     fig.tight_layout()
     plt.show()
@@ -209,7 +208,7 @@ if __name__ == '__main__':
     lat, lon = 52.434883, 6.262284  # Heino AWS
     height_map = load_data('./height_map.tif')
     number_samples = 1000
-    number_rotations = 10000
+    number_rotations = 50
 
     # Clean the data from -999 values
     height_map[height_map < -900] = 0
