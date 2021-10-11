@@ -101,12 +101,11 @@ def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples:
     """
     step = height // 2 / num_of_samples
     ox, oy = origin
-    list_of_points = np.zeros((num_of_samples, 2), dtype=tuple)
+    list_of_points = []
     for i in range(1, num_of_samples):
         base_point = ox, oy + step * i
         rotated_point = rotate(origin, base_point, angle)
-        list_of_points[i, 0] = base_point
-        list_of_points[i, 1] = rotated_point
+        list_of_points.append(rotated_point)
 
     return list_of_points
 
@@ -130,8 +129,7 @@ def scan_environment(height_map: np.array, origin: (float, float), res: (float, 
                                               angle=rotation,
                                               num_of_samples=num_of_samples,
                                               height=height_map.shape[1])
-        rotated_points = all_points[:, 1]
-        for point in rotated_points:
+        for point in all_points:
             elevation_value = interpolate(height_map=height_map, point=point)
             samples[rotation, sample_index] = convert_to_alpha(origin=origin,
                                                                point=point,
