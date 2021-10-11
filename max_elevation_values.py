@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from pvlib import solarposition
 
 
-def rotate(origin: (float, float), point: (float, float), angle: int):
+def rotate(origin: (float, float), point: (float, float), angle: float):
     """
 
     :param origin: A tuple with the X and Y position of the image origin.
@@ -69,7 +69,8 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     return interpolated_value
 
 
-def convert_to_alpha(origin: (float, float), point: (float, float), res: (float, float), elevation_value: float) -> float:
+def convert_to_alpha(origin: (float, float), point: (float, float), res: (float, float),
+                     elevation_value: float) -> float:
     """
 
     :param origin: Coordinates of the origin.
@@ -90,7 +91,7 @@ def convert_to_alpha(origin: (float, float), point: (float, float), res: (float,
     return alpha
 
 
-def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples: int, height: int) -> np.array:
+def get_points_from_rotation(origin: (float, float), angle: float, num_of_samples: int, height: int) -> np.array:
     """
 
     :param origin: Coordinates of the origin.
@@ -111,8 +112,11 @@ def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples:
     return list_of_points
 
 
-def scan_environment(height_map: np.array, origin: (float, float), res: (float, float),
-                     num_of_samples: int) -> np.array:
+def scan_environment(height_map: np.array,
+                     origin: (float, float),
+                     res: (float, float),
+                     num_of_samples: int,
+                     num_of_rotations: int) -> np.array:
     """
 
     :param num_of_samples: Number of samples taken on a line from origin to the edge of height_map
@@ -122,12 +126,13 @@ def scan_environment(height_map: np.array, origin: (float, float), res: (float, 
     :return: 360 x sampling step array where each row represent a full sampling done on each rotation
     """
 
-    samples = np.zeros((360, num_of_samples), dtype='float')
-    for rotation in range(360):
+    samples = np.zeros((num_of_rotations, num_of_samples), dtype='float')
+    for rotation in range(num_of_rotations):
         sample_index = 0
+        angle = rotation / num_of_rotations * 360
         # Update deltas according to current rotation
         all_points = get_points_from_rotation(origin=origin,
-                                              angle=rotation,
+                                              angle=angle,
                                               num_of_samples=num_of_samples,
                                               height=height_map.shape[1])
         for point in all_points:
@@ -149,12 +154,17 @@ def load_data(path: str) -> np.array:
     return np.array(ds.GetRasterBand(1).ReadAsArray())
 
 
-def plot_heights_and_sun(height_values: np.array, lat: float, lon: float, timezone: str = 'Europe/Amsterdam') -> None:
+def plot_heights_and_sun(height_values: np.array,
+                         lat: float, 
+                         lon: float,
+                         number_rotations: int,
+                         timezone: str = 'Europe/Amsterdam') -> None:
     """
 
     :param height_values:
     :param lat:
     :param lon:
+    :param number_rotations: 
     :param timezone:
     :return:
     """
@@ -165,9 +175,9 @@ def plot_heights_and_sun(height_values: np.array, lat: float, lon: float, timezo
     solpos = solpos.loc[solpos['apparent_elevation'] > 0, :]
 
     # plot the shade using the function fill_between
-    degrees = np.zeros((1, 360), dtype='float')
+    degrees = np.linspace(0, 360, number_rotations)
     max_angles = np.max(height_values, axis=1)
-    x_array = np.array(range(1, 361))
+    x_array = np.linspace(0, 360, number_rotations)
 
     fig, ax = plt.subplots()
 
@@ -198,6 +208,18 @@ def plot_heights_and_sun(height_values: np.array, lat: float, lon: float, timezo
 if __name__ == '__main__':
     lat, lon = 52.139586, 4.436399  # Voorschoten AWS
     height_map = load_data('./height_map.tif')
-    test_samples = scan_environment(height_map=height_map, origin=(774, 774),
-                                    res=(0.193884753946769, 0.193884753946785), num_of_samples=1000)
-    plot_heights_and_sun(test_samples, lat, lon)
+    number_samples = 1000
+    number_rotations = 10000
+
+    # Clean the data from -999 values
+    height_map[height_map < -900] = 0
+
+    test_samples = scan_environment(height_map=height_map,
+                                    origin=(774, 774),
+                                    res=(0.193884753946769, 0.193884753946785),
+                                    num_of_samples=number_samples,
+                                    num_of_rotations=number_rotations)
+    plot_heights_and_sun(height_values=test_samples,
+                         lat=lat,
+                         lon=lon,
+                         number_rotations=number_rotations)
