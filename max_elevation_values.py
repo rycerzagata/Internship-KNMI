@@ -35,8 +35,8 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     # row, column = y, x
 
     x, y = point
-    assert height_map.shape[0] > x >= 0, "x out of bounds"
-    assert height_map.shape[1] > y >= 0, "y out of bounds"
+    assert height_map.shape[0] - 1 > x >= 0, f"x:{x} out of bounds: (0, {height_map.shape[0] - 1})"
+    assert height_map.shape[1] - 1 > y >= 0, f"y:{y} out of bounds: (0, {height_map.shape[1] - 1})"
 
     # Interpolate values
     x1 = math.floor(x)
@@ -99,10 +99,10 @@ def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples:
     :param height: The height of the image (from the bottom to the top).
     :return: Coordinates of the points where a sample is taken.
     """
-    step = height // 2 / num_of_samples
+    step = (height - 2.1) // 2 / num_of_samples
     ox, oy = origin
     list_of_points = []
-    for i in range(1, num_of_samples):
+    for i in range(1, num_of_samples + 1):
         base_point = ox, oy + step * i
         rotated_point = rotate(origin, base_point, angle)
         list_of_points.append(rotated_point)
