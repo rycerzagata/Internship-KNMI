@@ -206,7 +206,7 @@ def plot_heights_and_sun(height_values: np.array,
 
 
 if __name__ == '__main__':
-    lat, lon = 52.139586, 4.436399  # Voorschoten AWS
+    lat, lon = 52.434883, 6.262284  # Heino AWS
     height_map = load_data('./height_map.tif')
     number_samples = 1000
     number_rotations = 10000
