@@ -206,16 +206,13 @@ def plot_heights_and_sun(height_values: np.array,
 
 if __name__ == '__main__':
     lat, lon = 52.434883, 6.262284  # Heino AWS
-    height_map = load_data('./height_map.tif')
+    height_map = load_data('D:/Documents/Internship_Drones/Data2/height_map_heino_ahn.tif')
     number_samples = 1000
     number_rotations = 50
 
-    # Clean the data from -999 values
-    height_map[height_map < -900] = 0
-
     test_samples = scan_environment(height_map=height_map,
-                                    origin=(774, 774),
-                                    res=(0.193884753946769, 0.193884753946785),
+                                    origin=(300, 300),
+                                    res=(0.5, 0.5),
                                     num_of_samples=number_samples,
                                     num_of_rotations=number_rotations)
     plot_heights_and_sun(height_values=test_samples,
