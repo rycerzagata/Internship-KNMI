@@ -82,7 +82,7 @@ def convert_to_alpha(origin: (float, float), point: (float, float), res: (float,
     x, y = point
     resx, resy = res
     dx, dy = (x - ox) * resx, (y - oy) * resy
-    distance_from_origin = math.sqrt(dx ** 2 + dy ** 2)
+    distance_from_origin = math.sqrt(dx * dx + dy * dy)
 
     alpha_radians = math.atan(elevation_value / distance_from_origin)
     alpha = math.degrees(alpha_radians)
@@ -101,11 +101,12 @@ def get_points_from_rotation(origin: (float, float), angle: int, num_of_samples:
     """
     step = (height - 2.1) // 2 / num_of_samples
     ox, oy = origin
-    list_of_points = []
-    for i in range(1, num_of_samples + 1):
-        base_point = ox, oy + step * i
+    list_of_points = np.zeros((num_of_samples, 2))
+    for i in range(num_of_samples):
+        base_point = ox, oy + step * (i + 1)
         rotated_point = rotate(origin, base_point, angle)
-        list_of_points.append(rotated_point)
+        list_of_points[i, 0] = rotated_point[0]
+        list_of_points[i, 1] = rotated_point[1]
 
     return list_of_points
 
@@ -198,5 +199,5 @@ if __name__ == '__main__':
     lat, lon = 52.139586, 4.436399  # Voorschoten AWS
     height_map = load_data('./height_map.tif')
     test_samples = scan_environment(height_map=height_map, origin=(774, 774),
-                                    res=(0.193884753946769, 0.193884753946785), num_of_samples=1000)
+                                    res=(0.193884753946769, 0.193884753946785), num_of_samples=1500)
     plot_heights_and_sun(test_samples, lat, lon)
