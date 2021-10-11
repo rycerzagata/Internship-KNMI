@@ -49,7 +49,7 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     z01 = height_map[y1, x2]
     z11 = height_map[y2, x2]
 
-    def linear(x0: float, z0: float, x1: float, z1: float, x: float):
+    def linear(x0: int, z0: int, x1: int, z1: int, x: float):
         # Perform linear interpolation for x, y between (x0,y0) and (x1,y1)
         return z0 + (z1 - z0) / (x1 - x0) * (x - x0)
 
@@ -69,7 +69,7 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     return interpolated_value
 
 
-def convert_to_alpha(origin: (float, float), point: (float, float), res: (float, float), elevation_value: int) -> float:
+def convert_to_alpha(origin: (float, float), point: (float, float), res: (float, float), elevation_value: float) -> float:
     """
 
     :param origin: Coordinates of the origin.
@@ -135,7 +135,7 @@ def scan_environment(height_map: np.array, origin: (float, float), res: (float, 
             samples[rotation, sample_index] = convert_to_alpha(origin=origin,
                                                                point=point,
                                                                res=res,
-                                                               elevation_value=int(elevation_value))
+                                                               elevation_value=elevation_value)
             sample_index += 1
     return samples
 
@@ -199,5 +199,5 @@ if __name__ == '__main__':
     lat, lon = 52.139586, 4.436399  # Voorschoten AWS
     height_map = load_data('./height_map.tif')
     test_samples = scan_environment(height_map=height_map, origin=(774, 774),
-                                    res=(0.193884753946769, 0.193884753946785), num_of_samples=1500)
+                                    res=(0.193884753946769, 0.193884753946785), num_of_samples=1000)
     plot_heights_and_sun(test_samples, lat, lon)
