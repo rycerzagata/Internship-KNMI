@@ -154,7 +154,6 @@ def scan_environment(height_map: np.array,
 def load_data(path: str) -> np.array:
     """
     Import a cropped DSM as a numpy array
-    :return:
     """
     ds = gdal.Open(path)
     return np.array(ds.GetRasterBand(1).ReadAsArray())
@@ -221,9 +220,9 @@ if __name__ == '__main__':
 
     lat, lon = 52.434883, 6.262284  # Heino AWS
     height_map = np.zeros((60, 60))
-    height_map[10][10] = 200
-    number_samples = 5000
-    number_rotations = 10000
+    height_map[10][10] = 100
+    number_samples = 100
+    number_rotations = 360
 
     print('Scanning environment...')
     start_time = time.time()
