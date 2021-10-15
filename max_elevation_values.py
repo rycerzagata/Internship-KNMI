@@ -5,7 +5,6 @@ import gdal
 import math
 import pandas as pd
 import matplotlib.pyplot as plt
-
 from numba import jit, njit, prange
 from pvlib import solarposition
 
@@ -16,9 +15,9 @@ def rotate(origin: (float, float), point: (float, float), angle: float):
     :param origin: A tuple with the X and Y position of the image origin.
     :param point: A tuple with X and Y position of a point that is supposed to be rotated.
     :param angle: The rotation angle, given in degrees.
-    :return The coordinates of a point rotated counterclockwise by a given angle around a given origin.
+    :return The coordinates of a point rotated clockwise by a given angle around a given origin.
     """
-    angle = -math.radians(angle)
+    angle = math.radians(-angle)
     ox, oy = origin
     px, py = point
 
@@ -91,7 +90,7 @@ def convert_to_alpha(origin: (float, float), point: (float, float), res: (float,
     dx, dy = (x - ox) * resx, (y - oy) * resy
     distance_from_origin = math.sqrt(dx * dx + dy * dy)
 
-    alpha_radians = math.atan(elevation_value / distance_from_origin)
+    alpha_radians = np.arctan(elevation_value / distance_from_origin)
     alpha = math.degrees(alpha_radians)
 
     return alpha
@@ -202,7 +201,7 @@ def plot_heights_and_sun(height_values: np.array,
         label = date.strftime('%Y-%m-%d')
         ax.plot(solpos.azimuth, solpos.apparent_elevation, label=label)
 
-    ax.figure.legend(loc='upper left')
+    ax.figure.legend(loc='upper right')
     ax.set_xlabel('Solar Azimuth (degrees)')
     ax.set_ylabel('Solar Elevation (degrees)')
     ax.fill_between(x_array, max_angles, 0)
@@ -221,19 +220,17 @@ if __name__ == '__main__':
     print('Done')
 
     lat, lon = 52.434883, 6.262284  # Heino AWS
-    height_map = load_data('./height_map.tif')
+    height_map = np.zeros((60, 60))
+    height_map[10][10] = 200
     number_samples = 5000
     number_rotations = 10000
-
-    # Clean the data from -999 values
-    height_map[height_map < -900] = 0
 
     print('Scanning environment...')
     start_time = time.time()
 
     test_samples = scan_environment(height_map=height_map,
-                                    origin=(774, 774),
-                                    res=(0.193884753946769, 0.193884753946785),
+                                    origin=(30, 30),
+                                    res=(1, 1),
                                     num_of_samples=number_samples,
                                     num_of_rotations=number_rotations)
     print(f'Scanning took {time.time() - start_time :.6f} seconds')
