@@ -1,7 +1,7 @@
 import os
 import rasterio
 from rasterio.plot import show
-import numpy
+import numpy as np
 from xrspatial import convolution
 from xrspatial import focal
 import xarray
@@ -39,10 +39,9 @@ ndvi = (band_nir.astype(float) - band_red.astype(float)) / (band_nir + band_red)
 # ndvi[ndvi < -1] = float('NaN')
 ndvi[ndvi > 1] = 1
 ndvi[ndvi < -1] = -1
-ndvi[numpy.isnan(ndvi)] = float('NaN')
-ndvi[numpy.isinf(ndvi)] = float('NaN')
-# print(numpy.amax(ndvi), numpy.amin(ndvi))
-#show(ndvi)
+ndvi[np.isnan(ndvi)] = float('NaN')
+ndvi[np.isinf(ndvi)] = float('NaN')
+# print(np.amax(ndvi), np.amin(ndvi))
 
 ndvi_arr = xarray.DataArray(ndvi)
 cellsize_x, cellsize_y = convolution.calc_cellsize(ndvi_arr)
