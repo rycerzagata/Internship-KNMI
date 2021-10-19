@@ -1,5 +1,4 @@
 import time
-
 import numpy as np
 import gdal
 import math
@@ -109,7 +108,7 @@ def get_points_from_rotation(origin: (float, float), angle: float, num_of_sample
     ox, oy = origin
     list_of_points = np.zeros((num_of_samples, 2))
     for i in range(num_of_samples):
-        base_point = ox, oy + step * (i + 1)
+        base_point = ox, (oy + step * (i + 1))
         rotated_point = rotate(origin, base_point, angle)
         list_of_points[i, 0] = rotated_point[0]
         list_of_points[i, 1] = rotated_point[1]
@@ -135,7 +134,7 @@ def scan_environment(height_map: np.array,
     samples = np.zeros((num_of_rotations, num_of_samples), dtype='float')
     for rotation in prange(num_of_rotations):
         sample_index = 0
-        angle = rotation / num_of_rotations * 360
+        angle = rotation / num_of_rotations * 360 - 90
         # Update deltas according to current rotation
         all_points = get_points_from_rotation(origin=origin,
                                               angle=angle,
@@ -218,18 +217,17 @@ if __name__ == '__main__':
     rotate = jit()(rotate)
     print('Done')
 
-    lat, lon = 52.434883, 6.262284  # Heino AWS
-    height_map = np.zeros((60, 60))
-    height_map[10][10] = 100
-    number_samples = 100
-    number_rotations = 360
+    lat, lon = 52.434883, 6.262284  # Heino AWS coordinates
+    height_map = load_data('height_map.tif')
+    number_samples = 1000
+    number_rotations = 3600
 
     print('Scanning environment...')
     start_time = time.time()
 
     test_samples = scan_environment(height_map=height_map,
-                                    origin=(30, 30),
-                                    res=(1, 1),
+                                    origin=(774, 774),
+                                    res=(0.193884753946769, 0.193884753946769),
                                     num_of_samples=number_samples,
                                     num_of_rotations=number_rotations)
     print(f'Scanning took {time.time() - start_time :.6f} seconds')
