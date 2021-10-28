@@ -43,8 +43,8 @@ def interpolate(height_map: np.array, point: (float, float)) -> float:
     # row, column = y, x
 
     x, y = point
-    assert height_map.shape[0] - 1 > x >= 0  # , f"x:{x} out of bounds: (0, {height_map.shape[0] - 1})"
-    assert height_map.shape[1] - 1 > y >= 0  # , f"y:{y} out of bounds: (0, {height_map.shape[1] - 1})"
+    assert height_map.shape[0]  > x >= 0  # , f"x:{x} out of bounds: (0, {height_map.shape[0] - 1})"
+    assert height_map.shape[1]  > y >= 0  # , f"y:{y} out of bounds: (0, {height_map.shape[1] - 1})"
 
     # Interpolate values
     x1 = math.floor(x)
@@ -165,12 +165,12 @@ def plot_heights_and_sun(height_values: np.array,
                          timezone: str = 'Europe/Amsterdam') -> None:
     """
 
-    :param height_values:
-    :param lat:
-    :param lon:
-    :param number_rotations: 
-    :param timezone:
-    :return:
+    :param height_values: normalized height map array
+    :param lat: latitude of the temperature sensor at the AWS
+    :param lon: longitute of the temperature sensor at the AWS
+    :param number_rotations: total number of shifts of angle
+    :param timezone: timezone of the AWS
+    :return: plots the sun path chart
     """
     times = pd.date_range('2019-01-01 00:00:00', '2020-01-01', closed='left', freq='MS', tz=timezone)
     solpos = solarposition.get_solarposition(times, lat, lon)
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     print('Done')
 
     lat, lon = 52.434883, 6.262284  # Heino AWS coordinates
-    height_map = load_data('height_map.tif')
+    height_map = load_data('height_map_ahn.tif')
     number_samples = 1000
     number_rotations = 3600
 
@@ -226,8 +226,8 @@ if __name__ == '__main__':
     start_time = time.time()
 
     test_samples = scan_environment(height_map=height_map,
-                                    origin=(774, 774),
-                                    res=(0.193884753946769, 0.193884753946769),
+                                    origin=(300, 300),
+                                    res=(0.500222665182664, 0.500545806439283), # 0.193884753946769, 0.193884753946769
                                     num_of_samples=number_samples,
                                     num_of_rotations=number_rotations)
     print(f'Scanning took {time.time() - start_time :.6f} seconds')
